@@ -287,13 +287,13 @@ class CarouselSidebar extends React.Component {
     tags: this.props.file.data.tags || [],
     suggestions: this.props.viewer?.tags || [],
     selected: {},
-    inPublicSlates: 0,
     isUploading: false,
     isDownloading: false,
     showSavedMessage: false,
     showConnectedSection: false,
     showFileSection: true,
     modalShow: false,
+    isPublic: this.props.file.isPublic,
   };
 
   componentDidMount = () => {
@@ -478,9 +478,6 @@ class CarouselSidebar extends React.Component {
     if (this.state.selected[slate.id]) {
       UserBehaviors.removeFromSlate({ slate, ids: [this.props.file.id] });
     } else {
-      if (slate.isPublic) {
-        inPublicSlates += 1;
-      }
       UserBehaviors.saveCopy({
         slate,
         files: [this.props.file],
@@ -505,7 +502,7 @@ class CarouselSidebar extends React.Component {
     }
 
     const id = this.props.file.id;
-    const slateId = this.props.data.id;
+    const slateId = this.props.data?.id;
     let slates = this.props.viewer.slates;
     for (let slate of slates) {
       if (slate.id === slateId) {
@@ -520,8 +517,8 @@ class CarouselSidebar extends React.Component {
 
   _handleToggleVisibility = async (e) => {
     if (this.props.external || !this.props.isOwner || !this.props.viewer) return;
-    const isPublic = this.props.file.isPublic;
-    const slateIsPublic = this.props.data.isPublic;
+    const isPublic = this.state.isPublic;
+    const slateIsPublic = this.props.data?.isPublic;
     let selected = cloneDeep(this.state.selected);
 
     const slateIds = Object.entries(this.state.selected)
@@ -555,6 +552,7 @@ class CarouselSidebar extends React.Component {
       }
       this.props.onAction({ type: "UPDATE_VIEWER", viewer: { slates } });
     }
+    this.setState({ isPublic: !this.state.isPublic });
 
     let response = await Actions.toggleFilePrivacy({ ...this.props.file, isPublic: !isPublic });
     Events.hasError(response);
@@ -564,7 +562,7 @@ class CarouselSidebar extends React.Component {
   };
 
   render() {
-    const isPublic = this.props.file.isPublic;
+    const isPublic = this.state.isPublic;
     const file = this.props.file;
     const { coverImage, type, size } = file.data;
     const editingAllowed = this.props.isOwner && !this.props.isRepost && !this.props.external;
